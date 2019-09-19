@@ -1,5 +1,7 @@
-{ pkgs, LORRI_ROOT, rust }:
+{ pkgs, LORRI_ROOT, rust}:
 let
+
+  lorriBinDir = "${LORRI_ROOT}/target/debug";
 
   inherit (import ./execline.nix { inherit pkgs; })
     writeExecline;
@@ -49,6 +51,17 @@ let
       ];
     };
 
+    # TODO: it would be good to sandbox this (it changes files in the tree)
+    # but somehow carnix needs to compile the whole friggin binary in order
+    # to generate a few measly nix files …
+    carnix = {
+      description = "check carnix up-to-date";
+      test = writeExecline "lint-carnix" {} [
+        "if" [ pkgs.runtimeShell "${LORRI_ROOT}/nix/update-carnix.sh" ]
+        "${pkgs.git}/bin/git" "diff" "--exit-code"
+      ];
+    };
+
   };
 
   # Write a attrset which looks like
@@ -66,6 +79,10 @@ let
       # bats can only parallelize if it finds GNU parallel in its environment.
       batsParallel = writeExecline "bats" {} [
         (pathAdd "prepend") "${pkgs.parallel}/bin"
+        "importas" "HOME" "HOME"
+        # silence the stupid citation output of parallel
+        "foreground" [ "${pkgs.coreutils}/bin/mkdir" "-p" ''''${HOME}/.parallel'' ]
+        "foreground" [ "${pkgs.coreutils}/bin/touch" ''''${HOME}/.parallel/will-cite'' ]
         "${bats}/bin/bats" "$@"
       ];
     in name: tests: pipe tests [
@@ -80,7 +97,7 @@ let
       (pkgs.writeText "testsuite")
       (test-suite: writeExecline name {} [
         batsParallel
-        # this executes 4 tasks in parrallel, which requires them to not depend on each other
+        # this executes 4 tasks in parallel, which requires them to not depend on each other
         "--jobs" "4"
         test-suite ])
     ];
