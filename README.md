@@ -243,13 +243,8 @@ evaluates your project.
 ### License & Copyright
 
 Copyright 2019 Target
+License: Apache 2.0 (see [`LICENSE` file](./LICENSE))
 
-`$ head -n3 < ./LICENSE`
-```
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
-```
 ---
 
 ###### ASCII Art
