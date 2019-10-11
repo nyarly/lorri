@@ -1,7 +1,10 @@
 {
   pkgs ? import ./nix/nixpkgs.nix { },
-  src ? pkgs.nix-gitignore.gitignoreSource [".git/"] ./.
 }:
+let
+  src = pkgs.nix-gitignore.gitignoreSource [".git/"] ./.;
+
+in
 ((pkgs.callPackage ./Cargo.nix {
   cratesIO = pkgs.callPackage ./nix/carnix/crates-io.nix {};
 }).lorri {}).override {
