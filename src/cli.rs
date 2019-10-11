@@ -95,7 +95,7 @@ pub struct Ping_ {
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
 pub struct UpgradeTo {
-    /// the path to a local check out of Lorri.
+    /// Where to upgrade to. If no subcommand given, `rolling-release` is assumed.
     #[structopt(subcommand)]
     pub source: Option<UpgradeSource>,
 }
@@ -114,6 +114,11 @@ pub enum UpgradeSource {
     #[structopt(name = "master")]
     Master,
 
+    /// Upgrade to the specified git branch, which will be fetched
+    /// and built locally.
+    #[structopt(name = "branch")]
+    Branch(BranchDest),
+
     /// Upgrade to a version in an arbitrary local directory.
     #[structopt(name = "local")]
     Local(LocalDest),
@@ -125,4 +130,11 @@ pub struct LocalDest {
     /// the path to a local check out of Lorri.
     #[structopt(parse(from_os_str))]
     pub path: PathBuf,
+}
+
+/// Install an arbitrary version of Lorri from an upstream git branch.
+#[derive(StructOpt, Debug)]
+pub struct BranchDest {
+    /// the path to git branch of the upstream repository.
+    pub branch: String,
 }
