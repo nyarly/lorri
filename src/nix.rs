@@ -35,7 +35,7 @@
 use osstrlines;
 use serde_json;
 use std::collections::HashMap;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use vec1::Vec1;
@@ -45,7 +45,7 @@ use vec1::Vec1;
 pub struct CallOpts {
     input: Input,
     attribute: Option<String>,
-    argstrs: HashMap<String, String>,
+    argstrs: HashMap<OsString, OsString>,
 }
 
 /// Which input to give nix.
@@ -153,8 +153,13 @@ impl CallOpts {
     ///   output.unwrap(), "Hello, Jill!"
     /// );
     /// ```
-    pub fn argstr(&mut self, name: &str, value: &str) -> &mut Self {
-        self.argstrs.insert(name.to_string(), value.to_string());
+    pub fn argstr<P, Q>(&mut self, name: P, value: Q) -> &mut Self
+    where
+        P: AsRef<OsStr>,
+        Q: AsRef<OsStr>,
+    {
+        self.argstrs
+            .insert(name.as_ref().to_owned(), value.as_ref().to_owned());
         self
     }
 
@@ -344,8 +349,8 @@ impl CallOpts {
 
         for (name, value) in self.argstrs.iter() {
             ret.push(OsStr::new("--argstr"));
-            ret.push(OsStr::new(name));
-            ret.push(OsStr::new(value));
+            ret.push(&name);
+            ret.push(&value);
         }
 
         match self.input {
