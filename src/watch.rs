@@ -15,6 +15,15 @@ pub struct Watch {
     rx: std::sync::mpsc::Receiver<notify::RawEvent>,
     watches: HashSet<PathBuf>,
 }
+/// Description of the project change that triggered a build.
+#[derive(Clone,Debug)]
+pub enum Reason {
+    /// When a project is presented to Lorri to track, it's built for this reason.
+    Started(PathBuf),
+    /// When there is a filesystem change, the first changed file is recorded,
+    /// along with a count of other filesystem events.
+    FilesChanged(PathBuf, u16)
+}
 
 impl Watch {
     /// Instantiate a new Watch.
@@ -43,22 +52,27 @@ impl Watch {
     }
 
     /// Wait for a batch of changes to arrive, returning when they do.
-    pub fn wait_for_change(&mut self) -> Result<(), ()> {
+    pub fn wait_for_change(&mut self) -> Result<Reason, ()> {
         self.block()
     }
 
     /// Block until we have at least one event
-    pub fn block(&mut self) -> Result<(), ()> {
-        if self.blocking_iter().next().is_none() {
-            debug!("No event received!");
-            return Err(());
+    pub fn block(&mut self) -> Result<Reason, ()> {
+        match self.blocking_iter().next() {
+            Some(event) => {
+                let extra = self.process_ready();
+                Ok(Reason::FilesChanged(event.path.ok_or(())?, extra?))
+            },
+            None => {
+                debug!("No event received!");
+                return Err(());
+            }
         }
 
-        self.process_ready()
     }
 
     /// Block until we have at least one event
-    pub fn block_timeout(&self, timeout: Duration) -> Result<(), ()> {
+    pub fn block_timeout(&self, timeout: Duration) -> Result<u16, ()> {
         if let Some(Ok(_)) = self.timeout_iter(timeout).next() {
             self.process_ready()
         } else {
@@ -96,7 +110,7 @@ impl Watch {
 
     /// Non-blocking, read all the events already received -- draining
     /// the event queue.
-    fn process_ready(&self) -> Result<(), ()> {
+    fn process_ready(&self) -> Result<u16, ()> {
         let mut events = 0;
         let mut iter = self.try_iter();
 
@@ -108,7 +122,7 @@ impl Watch {
                 }
                 None => {
                     info!("Found {} events", events);
-                    return Ok(());
+                    return Ok(events);
                 }
             }
         }

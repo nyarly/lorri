@@ -7,14 +7,14 @@ use crate::pathreduction::reduce_paths;
 use crate::project::roots;
 use crate::project::roots::Roots;
 use crate::project::Project;
-use crate::watch::Watch;
+use crate::watch::{Reason,Watch};
 use std::sync::mpsc::Sender;
 
 /// Builder events sent back over `BuildLoop.tx`.
 #[derive(Clone, Debug)]
 pub enum Event {
     /// The build has started
-    Started,
+    Started(Reason),
     /// The build completed successfully
     Completed(BuildResults),
     /// The build command returned a failing exit status
@@ -62,12 +62,13 @@ impl<'a> BuildLoop<'a> {
     /// When new filesystem changes are detected while a build is
     /// still running, it is finished first before starting a new build.
     pub fn forever(&mut self, tx: Sender<Event>) {
+        let mut reason = Reason::Started(self.project.nix_file.clone().0);
         loop {
             // TODO: Make err use Display instead of Debug.
             // Otherwise user errors (especially for IO errors)
             // are pretty hard to debug. Might need to review
             // whether we can handle some errors earlier than here.
-            tx.send(Event::Started)
+            tx.send(Event::Started(reason))
                 .expect("Failed to notify a started evaluation");
 
             match self.once() {
@@ -84,7 +85,7 @@ impl<'a> BuildLoop<'a> {
                 }
             }
 
-            self.watch.wait_for_change().expect("Waiter exited");
+            reason = self.watch.wait_for_change().expect("Waiter exited");
         }
     }
 
