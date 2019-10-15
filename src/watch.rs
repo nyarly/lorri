@@ -19,7 +19,7 @@ pub struct Watch {
 #[derive(Clone, Debug)]
 pub enum Reason {
     /// When a project is presented to Lorri to track, it's built for this reason.
-    Started(PathBuf),
+    ProjectAdded(PathBuf),
     /// When there is a filesystem change, the first changed file is recorded,
     /// along with a count of other filesystem events.
     FilesChanged(PathBuf, u16),

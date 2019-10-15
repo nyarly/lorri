@@ -62,7 +62,7 @@ impl<'a> BuildLoop<'a> {
     /// When new filesystem changes are detected while a build is
     /// still running, it is finished first before starting a new build.
     pub fn forever(&mut self, tx: Sender<Event>) {
-        let mut reason = Reason::Started(self.project.nix_file.clone().0);
+        let mut reason = Reason::ProjectAdded(self.project.nix_file.clone().0);
         loop {
             // TODO: Make err use Display instead of Debug.
             // Otherwise user errors (especially for IO errors)
