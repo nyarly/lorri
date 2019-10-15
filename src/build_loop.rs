@@ -7,7 +7,7 @@ use crate::pathreduction::reduce_paths;
 use crate::project::roots;
 use crate::project::roots::Roots;
 use crate::project::Project;
-use crate::watch::{Reason,Watch};
+use crate::watch::{Reason, Watch};
 use std::sync::mpsc::Sender;
 
 /// Builder events sent back over `BuildLoop.tx`.

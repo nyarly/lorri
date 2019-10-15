@@ -16,13 +16,13 @@ pub struct Watch {
     watches: HashSet<PathBuf>,
 }
 /// Description of the project change that triggered a build.
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub enum Reason {
     /// When a project is presented to Lorri to track, it's built for this reason.
     Started(PathBuf),
     /// When there is a filesystem change, the first changed file is recorded,
     /// along with a count of other filesystem events.
-    FilesChanged(PathBuf, u16)
+    FilesChanged(PathBuf, u16),
 }
 
 impl Watch {
@@ -62,13 +62,12 @@ impl Watch {
             Some(event) => {
                 let extra = self.process_ready();
                 Ok(Reason::FilesChanged(event.path.ok_or(())?, extra?))
-            },
+            }
             None => {
                 debug!("No event received!");
-                return Err(());
+                Err(())
             }
         }
-
     }
 
     /// Block until we have at least one event
