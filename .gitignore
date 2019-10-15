@@ -10,3 +10,5 @@ result
 .bash_history
 crates-io.list
 *.rustfmt
+cov/
+covs/
